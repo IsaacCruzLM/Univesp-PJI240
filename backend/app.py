@@ -17,10 +17,37 @@ from utils.database import db_session
 #pip install -r requirements.txt
 
 app = Flask(__name__)
-CORS(app)  # Permitir CORS para comunicação com o frontend React
+
+# Configuração completa do CORS para permitir todas as origens e métodos
+CORS(app, 
+     origins=["*"],  # Permitir todas as origens
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Métodos permitidos
+     allow_headers=["Content-Type", "Authorization", "X-Username"],  # Headers permitidos
+     supports_credentials=True  # Permitir cookies/credenciais
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+# Handler para requisições OPTIONS (preflight CORS)
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Username")
+        response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
+        response.headers.add('Access-Control-Allow-Credentials', "true")
+        return response
+
+# Adicionar headers CORS em todas as respostas
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Username')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 
 class APIRoutes():
