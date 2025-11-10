@@ -18,35 +18,30 @@ from utils.database import db_session
 
 app = Flask(__name__)
 
-# Configuração completa do CORS para permitir todas as origens e métodos
+# Configuração simplificada e mais permissiva do CORS
 CORS(app, 
-     origins=["*"],  # Permitir todas as origens
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Métodos permitidos
-     allow_headers=["Content-Type", "Authorization", "X-Username"],  # Headers permitidos
-     supports_credentials=True  # Permitir cookies/credenciais
+     resources={r"/*": {"origins": "*"}},
+     allow_headers=["Content-Type", "Authorization", "X-Username"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     expose_headers=["Content-Type"],
+     send_wildcard=True,
+     always_send=True
 )
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# Handler para requisições OPTIONS (preflight CORS)
-@app.before_request
-def handle_preflight():
-    if request.method == "OPTIONS":
-        response = make_response()
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Username")
-        response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
-        response.headers.add('Access-Control-Allow-Credentials', "true")
-        return response
-
-# Adicionar headers CORS em todas as respostas
+# Handler adicional para garantir CORS em todas as respostas
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Username')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    origin = request.headers.get('Origin')
+    if origin:
+        response.headers['Access-Control-Allow-Origin'] = origin
+    else:
+        response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Username'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+    response.headers['Access-Control-Max-Age'] = '3600'
     return response
 
 
